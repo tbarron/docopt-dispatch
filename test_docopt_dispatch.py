@@ -1,3 +1,4 @@
+import pdb
 from pytest import raises, yield_fixture as fixture
 
 from docopt_dispatch import Dispatch, DispatchError
