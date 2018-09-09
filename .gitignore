@@ -32,3 +32,9 @@ nosetests.xml
 
 # Sphinx
 docs/_*
+
+.cache
+.env
+DODO.txt
+frip.py
+venv
