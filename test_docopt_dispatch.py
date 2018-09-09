@@ -32,13 +32,13 @@ def dispatch():
 def test_dispatch_can_dispatch_on_option(dispatch):
     with raises(OptionMarker) as error:
         dispatch(doc, '--option')
-    assert error.value.message == {'option': True, 'argument': None}
+    assert error.value.args[0] == {'option': True, 'argument': None}
 
 
 def test_dispatch_can_dispatch_on_argument(dispatch):
     with raises(ArgumentMarker) as error:
         dispatch(doc, 'hi')
-    assert error.value.message == {'option': False, 'argument': 'hi'}
+    assert error.value.args[0] == {'option': False, 'argument': 'hi'}
 
 
 def test_dispatch_will_raise_error_if_it_cannot_dispatch(dispatch):
@@ -46,7 +46,7 @@ def test_dispatch_will_raise_error_if_it_cannot_dispatch(dispatch):
         dispatch(doc, '')
     message = ('None of dispatch conditions --option, <argument> '
                'is triggered')
-    assert error.value.message == message
+    assert error.value.args[0] == message
 
 
 class MultipleDispatchMarker(Exception):
@@ -67,7 +67,7 @@ def multiple_dispatch():
 def test_multiple_dispatch(multiple_dispatch):
     with raises(MultipleDispatchMarker) as error:
         multiple_dispatch(doc, 'hi --option')
-    assert error.value.message == {'option': True, 'argument': 'hi'}
+    assert error.value.args[0] == {'option': True, 'argument': 'hi'}
 
 
 def test_multiple_dispatch_will_raise_error(multiple_dispatch):
@@ -75,4 +75,4 @@ def test_multiple_dispatch_will_raise_error(multiple_dispatch):
         multiple_dispatch(doc, '--option')
     message = ('None of dispatch conditions --option <argument> '
                'is triggered')
-    assert error.value.message == message
+    assert error.value.args[0] == message
