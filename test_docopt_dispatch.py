@@ -87,3 +87,72 @@ def test_multiple_dispatch_will_raise_error_noopt(multiple_dispatch):
     assert error.value.args[0] == message
 
 
+ordoc = """
+Usage:
+    cli
+    cli parse --all
+    cli parse [URL]
+"""
+
+class OrderDispatchMarker(Exception):
+    pass
+
+
+@fixture
+def order_dispatch():
+    dispatch = Dispatch()
+
+    @dispatch.on()
+    def bare(**kwargs):
+        result = kwargs.copy()
+        result['function'] = 'bare'
+        raise OrderDispatchMarker(result)
+
+    @dispatch.on('parse')
+    def cmd(**kwargs):
+        result = kwargs.copy()
+        result['function'] = 'cmd'
+        raise OrderDispatchMarker(result)
+
+    @dispatch.on('parse', 'URL')
+    def arg(**kwargs):
+        result = kwargs.copy()
+        result['function'] = 'arg'
+        raise OrderDispatchMarker(result)
+
+    @dispatch.on('parse', '--all')
+    def opt(**kwargs):
+        result = kwargs.copy()
+        result['function'] = 'opt'
+        raise OrderDispatchMarker(result)
+
+    yield dispatch
+
+
+def test_order_bare(order_dispatch):
+    with raises(OrderDispatchMarker) as error:
+        order_dispatch(ordoc, "")
+    assert error.value.args[0] == {'parse': False, 'all': False, 'URL': None,
+                                   'function': 'bare',}
+
+
+def test_order_cmd(order_dispatch):
+    with raises(OrderDispatchMarker) as error:
+        order_dispatch(ordoc, "parse")
+    assert error.value.args[0] == {'parse': True, 'all': False, 'URL': None,
+                                   'function': 'cmd'}
+
+
+def test_order_url(order_dispatch):
+    with raises(OrderDispatchMarker) as error:
+        order_dispatch(ordoc, "parse url")
+    assert error.value.args[0] == {'parse': True, 'all': False, 'URL': 'url',
+                                   'function': 'arg'}
+
+
+def test_order_all(order_dispatch):
+    with raises(OrderDispatchMarker) as error:
+        order_dispatch(ordoc, "parse --all")
+    assert error.value.args[0] == {'parse': True, 'all': True, 'URL': None,
+                                   'function': 'opt'}
+
