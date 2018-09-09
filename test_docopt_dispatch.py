@@ -79,3 +79,11 @@ def test_multiple_dispatch_will_raise_error(multiple_dispatch):
     assert error.value.args[0] == message
 
 
+def test_multiple_dispatch_will_raise_error_noopt(multiple_dispatch):
+    with raises(DispatchError) as error:
+        multiple_dispatch(doc, 'flipper')
+    message = ('None of dispatch conditions --option <argument> '
+               'is triggered')
+    assert error.value.args[0] == message
+
+
