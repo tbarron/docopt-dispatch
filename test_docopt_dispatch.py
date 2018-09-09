@@ -92,6 +92,7 @@ Usage:
     cli
     cli parse --all
     cli parse [URL]
+    cli parse -f <filename>
 """
 
 class OrderDispatchMarker(Exception):
@@ -108,6 +109,12 @@ def order_dispatch():
         result['function'] = 'bare'
         raise OrderDispatchMarker(result)
 
+    @dispatch.on('parse', '-f', '<filename>')
+    def arg_angle(**kwargs):
+        result = kwargs.copy()
+        result['function'] = 'arg_angle'
+        raise OrderDispatchMarker(result)
+
     @dispatch.on('parse')
     def cmd(**kwargs):
         result = kwargs.copy()
@@ -115,9 +122,9 @@ def order_dispatch():
         raise OrderDispatchMarker(result)
 
     @dispatch.on('parse', 'URL')
-    def arg(**kwargs):
+    def arg_upper(**kwargs):
         result = kwargs.copy()
-        result['function'] = 'arg'
+        result['function'] = 'arg_upper'
         raise OrderDispatchMarker(result)
 
     @dispatch.on('parse', '--all')
@@ -133,6 +140,7 @@ def test_order_bare(order_dispatch):
     with raises(OrderDispatchMarker) as error:
         order_dispatch(ordoc, "")
     assert error.value.args[0] == {'parse': False, 'all': False, 'URL': None,
+                                   'f': False, 'filename': None,
                                    'function': 'bare',}
 
 
@@ -140,19 +148,29 @@ def test_order_cmd(order_dispatch):
     with raises(OrderDispatchMarker) as error:
         order_dispatch(ordoc, "parse")
     assert error.value.args[0] == {'parse': True, 'all': False, 'URL': None,
+                                   'f': False, 'filename': None,
                                    'function': 'cmd'}
 
 
-def test_order_url(order_dispatch):
+def test_order_arg_upper(order_dispatch):
     with raises(OrderDispatchMarker) as error:
         order_dispatch(ordoc, "parse url")
     assert error.value.args[0] == {'parse': True, 'all': False, 'URL': 'url',
-                                   'function': 'arg'}
+                                   'f': False, 'filename': None,
+                                   'function': 'arg_upper'}
+
+
+def test_order_arg_angle(order_dispatch):
+    with raises(OrderDispatchMarker) as error:
+        order_dispatch(ordoc, "parse -f foobar")
+    assert error.value.args[0] == {'parse': True, 'all': False, 'URL': None,
+                                   'f': True, 'filename': 'foobar',
+                                   'function': 'arg_angle'}
 
 
 def test_order_all(order_dispatch):
     with raises(OrderDispatchMarker) as error:
         order_dispatch(ordoc, "parse --all")
     assert error.value.args[0] == {'parse': True, 'all': True, 'URL': None,
+                                   'f': False, 'filename': None,
                                    'function': 'opt'}
-
