@@ -15,6 +15,14 @@ class DispatchError(Exception):
     pass
 
 
+def specific(item):
+    result = len(item[0])
+    for val in item[0]:
+        if not val.isupper() and not val.startswith('<'):
+            result += 1
+    return result
+
+
 class Dispatch(object):
 
     def __init__(self):
@@ -29,7 +37,11 @@ class Dispatch(object):
     def __call__(self, *args, **kwargs):
         from docopt import docopt
         arguments = docopt(*args, **kwargs)
-        for patterns, function in self._functions.items():
+        if not hasattr(self, '_sorted_func_list'):
+            self._sorted_func_list = sorted(self._functions.items(),
+                                            key=specific,
+                                            reverse=True)
+        for patterns, function in self._sorted_func_list:
             if all(arguments[pattern] for pattern in patterns):
                 function(**self._kwargify(arguments))
                 return
